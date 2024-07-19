@@ -32,8 +32,11 @@ COPY backend/ ./backend/
 # Копируйте собранный фронтенд из первого этапа
 COPY --from=frontend-builder /app/frontend/build ./frontend/build
 
+# Установите Gunicorn
+RUN pip install gunicorn
+
 # Сделайте порт доступным снаружи контейнера
-EXPOSE 5001
+EXPOSE 5000
 
 # Запуск приложения
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5001"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "backend.app:app"]
