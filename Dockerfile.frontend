@@ -1,0 +1,21 @@
+# Использование официального базового образа Node.js
+FROM node:14 as frontend-builder
+
+# Установка рабочей директории в контейнере
+WORKDIR /app/frontend
+
+# Копирование файлов package.json и package-lock.json
+COPY ./frontend/package*.json ./
+
+# Установка всех зависимостей
+RUN npm install
+
+# Установка nodemon для отслеживания изменений
+RUN npm install -g nodemon
+
+# Копирование остальных необходимых файлов проекта
+COPY ./frontend/ .
+
+# Запуск сборки при изменении файлов в src или public
+# Используем nodemon с опцией --legacy-watch для лучшей совместимости с Docker
+CMD ["nodemon", "--legacy-watch", "--watch", "src", "--watch", "public", "--exec", "npm run build && echo 'Build complete'"]

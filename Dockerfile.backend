@@ -1,0 +1,23 @@
+# Install Python и настройте backend
+FROM python:3.10-slim
+
+# Установите рабочую директорию в контейнере
+WORKDIR /app
+
+# Копируйте файлы зависимостей для Python
+COPY backend/requirements.txt ./requirements.txt
+
+# Обновите pip и установите зависимости для Python
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+# Копируйте исходный код приложения в рабочую директорию
+COPY backend/ .
+
+# Установите Gunicorn
+RUN pip install gunicorn
+
+# Сделайте порт доступным снаружи контейнера
+EXPOSE 5001
+
+# Запуск приложения
+CMD ["gunicorn", "-b", "0.0.0.0:5001", "app:app"]

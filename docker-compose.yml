@@ -1,14 +1,30 @@
 version: '3.8'
 
+volumes:
+  frontend_build: {}
+
 services:
-  web:
-    build: .
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     volumes:
-      - .:/app
-      - ./frontend/node_modules:/app/frontend/node_modules
+      - ./frontend/src:/app/frontend/src
+      - ./frontend/public:/app/frontend/public
+      - frontend_build:/app/frontend/build
     ports:
-      - "5000:5000"
+      - "3000:3000"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - ./backend:/app
+      - frontend_build:/app/frontend/build
+    ports:
+      - "5001:5001"
     environment:
-      - FLASK_APP=backend/app.py
+      - FLASK_APP=app.py
       - FLASK_ENV=development
-    command: gunicorn -b 0.0.0.0:5000 backend.app:app
+    command: gunicorn --chdir /app app:app -b 0.0.0.0:5001
