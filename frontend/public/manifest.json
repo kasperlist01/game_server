@@ -1,0 +1,30 @@
+{
+  "short_name": "Manage Game Server",
+  "name": "Manage Game Server",
+  "icons": [
+    {
+      "src": "./icons/app_logo.png",
+      "sizes": "57x57",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/app_logo.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/app_logo.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/app_logo.png",
+      "sizes": "167x167",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
