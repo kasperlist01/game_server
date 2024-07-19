@@ -1,0 +1,37 @@
+/* Общие стили для всех устройств */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f0f2f5;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+#root {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-bottom: 90px;
+    box-sizing: border-box;
+}
+
+.App {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px; /* Максимальная ширина для больших экранов */
+    margin: 0 auto; /* Центрирование содержимого */
+    padding: 20px; /* Отступы по бокам */
+    box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+    .App {
+        padding: 10px; /* Уменьшаем отступы по бокам для мобильных устройств */
+    }
+}

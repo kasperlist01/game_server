@@ -1,0 +1,22 @@
+.menu-container {
+    width: 100%;
+    justify-content: center;
+    background-color: #f0f2f5;
+}
+
+.menu-column {
+    display: flex;
+    justify-content: center;
+}
+
+.ant-menu-horizontal {
+    width: auto;
+    justify-content: center;
+}
+
+/* Медиа-запрос для небольших экранов (телефоны) */
+@media (max-width: 600px) {
+    .menu-column {
+        flex: none;
+    }
+}

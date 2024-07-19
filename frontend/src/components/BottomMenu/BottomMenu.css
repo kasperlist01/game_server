@@ -1,0 +1,21 @@
+/* BottomMenu.css */
+.bottom-menu {
+    position: fixed;
+    bottom: 20px; /* Приподнимаем меню немного выше нижнего края экрана */
+    left: 50%; /* Центрируем меню по горизонтали */
+    transform: translateX(-50%);
+    width: 90%; /* Задаем ширину меню */
+    max-width: 400px; /* Ограничиваем максимальную ширину */
+    background-color: white;
+    border-radius: 20px; /* Скругляем все углы */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Добавляем тень для эффекта "плавания" */
+    z-index: 1000;
+}
+
+.menu {
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    margin: 0;
+}

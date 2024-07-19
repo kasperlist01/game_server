@@ -1,0 +1,33 @@
+@media (max-width: 600px) {
+    .dashboard {
+        margin: 0;
+    }
+}
+
+.dashboard {
+    margin: 5%;
+}
+
+.server-control {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: start;
+}
+
+.logs {
+    margin-bottom: 20px;
+}
+
+.logs .ant-list {
+    max-height: 200px; /* Ограничиваем высоту для списка логов */
+    overflow-y: auto; /* Добавляем прокрутку по вертикали */
+}
+
+.player-management {
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 18px;
+    color: #888;
+}
