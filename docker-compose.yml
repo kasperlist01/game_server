@@ -6,7 +6,6 @@ services:
     volumes:
       - .:/app
       - ./frontend/node_modules:/app/frontend/node_modules
-      - ./frontend/build:/app/frontend/build
     ports:
       - "5000:5000"
     environment:
