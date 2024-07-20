@@ -14,6 +14,9 @@ services:
       - frontend_build:/app/frontend/build
     ports:
       - "3000:3000"
+    networks:
+      - my_network
+    container_name: game_server_frontend
 
   backend:
     build:
@@ -23,8 +26,31 @@ services:
       - ./backend:/app
       - frontend_build:/app/frontend/build
     ports:
-      - "5001:5001"
+      - "5000:5000"
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
-    command: gunicorn --chdir /app app:app -b 0.0.0.0:5001
+    networks:
+      my_network:
+        aliases:
+          - flask-app
+    command: gunicorn --bind 0.0.0.0:8000 --workers 4 "app:app"
+    container_name: game_server_backend
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - backend
+    networks:
+      - my_network
+    container_name: game_server_nginx
+
+networks:
+  my_network:

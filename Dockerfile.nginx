@@ -1,0 +1,8 @@
+# Использование официального образа Nginx
+FROM nginx:latest
+
+# Удаление конфигурации по умолчанию
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Копирование конфигурационного файла Nginx в контейнер
+COPY nginx.conf /etc/nginx/conf.d
