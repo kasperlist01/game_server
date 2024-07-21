@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Menu as AntMenu, Row, Col } from 'antd';
-import { HomeOutlined } from '@ant-design/icons';
 import './Menu.css';
 import BottomMenu from '../BottomMenu/index';
 import { ReactComponent as MinecraftIcon } from './assets/icons/minecraft.svg';

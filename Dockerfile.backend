@@ -14,9 +14,4 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 
 # Сделайте порт доступным снаружи контейнера
-EXPOSE 5000
-
-# Запуск приложения
-CMD ["python3", "app.py"]
-
-
+EXPOSE 8000

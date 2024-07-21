@@ -17,6 +17,9 @@ services:
     networks:
       - my_network
     container_name: game_server_frontend
+    profiles:
+      - dev
+      - prod
 
   backend:
     build:
@@ -26,16 +29,35 @@ services:
       - ./backend:/app
       - frontend_build:/app/frontend/build
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
-      - FLASK_APP=app.py
-      - FLASK_ENV=development
+      - FASTAPI_ENV=production
     networks:
       my_network:
         aliases:
-          - flask-app
-    command: gunicorn --bind 0.0.0.0:8000 --workers 4 "app:app"
+          - fastapi-app
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
     container_name: game_server_backend
+    profiles:
+      - prod
+
+  backend_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - ./backend:/app
+      - frontend_build:/app/frontend/build
+    ports:
+      - "8001:8000"
+    environment:
+      - FASTAPI_ENV=development
+    networks:
+       - my_network
+    command: uvicorn app:app --host 0.0.0.0 --reload
+    container_name: game_server_backend_dev
+    profiles:
+      - dev
 
   nginx:
     build:
@@ -51,6 +73,8 @@ services:
     networks:
       - my_network
     container_name: game_server_nginx
+    profiles:
+      - prod
 
 networks:
   my_network:
