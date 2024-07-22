@@ -28,7 +28,7 @@ services:
     volumes:
       - ./backend:/app
       - frontend_build:/app/frontend/build
-      - /var/run/docker.sock:/var/run/docker.sock
+#      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"
     environment:
@@ -36,7 +36,8 @@ services:
     networks:
       my_network:
         aliases:
-          - fastapi-app  # Добавляем алиас для nginx
+          - fastapi-app
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
     container_name: game_server_backend
     profiles:
       - prod
@@ -48,13 +49,13 @@ services:
     volumes:
       - ./backend:/app
       - frontend_build:/app/frontend/build
-      - /var/run/docker.sock:/var/run/docker.sock
+#      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8001:8000"
     environment:
       - FASTAPI_ENV=development
     networks:
-      - my_network
+       - my_network
     command: uvicorn app:app --host 0.0.0.0 --reload
     container_name: game_server_backend_dev
     profiles:
