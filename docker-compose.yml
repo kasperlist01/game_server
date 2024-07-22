@@ -4,7 +4,7 @@ volumes:
   frontend_build: {}
 
 services:
-  frontend:
+  frontend_dev:
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -16,9 +16,28 @@ services:
       - "3000:3000"
     networks:
       - my_network
-    container_name: game_server_frontend
+    container_name: game_server_frontend_dev
+    environment:
+      - REACT_APP_SERVER_URL=http://localhost:8001
     profiles:
       - dev
+
+  frontend_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    volumes:
+      - ./frontend/src:/app/frontend/src
+      - ./frontend/public:/app/frontend/public
+      - frontend_build:/app/frontend/build
+    ports:
+      - "3000:3000"
+    networks:
+      - my_network
+    container_name: game_server_frontend_prod
+    environment:
+      - REACT_APP_SERVER_URL=https://gamme-server.ru
+    profiles:
       - prod
 
   backend:

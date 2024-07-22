@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Row, Col, Card, Statistic } from 'antd';
+import { Button, Row, Col, Card, Statistic, Spin } from 'antd';
 import './ServerControl.css'; // Импортируем CSS файл
 
 const ServerControl = ({ game }) => {
+    const serverUrl = process.env.REACT_APP_SERVER_URL;
     const [serverStatus, setServerStatus] = useState('Stopped');
+    const [loading, setLoading] = useState(false); // Состояние для отслеживания загрузки
     const [metrics, setMetrics] = useState({
         cpuUsage: 0,
         memoryUsage: 0,
@@ -13,7 +15,7 @@ const ServerControl = ({ game }) => {
 
     const fetchMetrics = async () => {
         try {
-            const response = await fetch('http://localhost:8001/metrics');
+            const response = await fetch(serverUrl + '/metrics');
             const data = await response.json();
             setMetrics({
                 cpuUsage: data.cpu_usage,
@@ -28,57 +30,79 @@ const ServerControl = ({ game }) => {
 
     useEffect(() => {
         fetchMetrics();
-        const interval = setInterval(fetchMetrics, 1000); // Обновляем метрики каждые 10 секунд
+        const interval = setInterval(fetchMetrics, 10000); // Обновляем метрики каждые 10 секунд
 
         return () => clearInterval(interval); // Очищаем интервал при размонтировании компонента
     }, []);
 
     const handleStart = async () => {
+        setLoading(true); // Устанавливаем состояние загрузки
         try {
-            const response = await fetch('http://localhost:8001/server/start', { method: 'POST', body: JSON.stringify(game)});
+            console.log(JSON.stringify({ game: game }));
+            const response = await fetch(serverUrl + '/server/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ game: game })
+            });
             const data = await response.json();
             setServerStatus(data.status);
         } catch (error) {
             console.error('Error starting server:', error);
         }
+        setLoading(false); // Сбрасываем состояние загрузки
     };
 
     const handleStop = async () => {
+        setLoading(true); // Устанавливаем состояние загрузки
         try {
-            const response = await fetch('http://localhost:8001/server/stop', { method: 'POST' });
+            const response = await fetch(serverUrl + '/server/stop', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ game: game })
+            });
             const data = await response.json();
             setServerStatus(data.status);
         } catch (error) {
             console.error('Error stopping server:', error);
         }
+        setLoading(false); // Сбрасываем состояние загрузки
     };
 
     const handleRestart = async () => {
+        setLoading(true); // Устанавливаем состояние загрузки
         try {
-            const response = await fetch('http://localhost:8001/server/restart', { method: 'POST' });
+            const response = await fetch(serverUrl + '/server/restart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ game: game })
+            });
             const data = await response.json();
             setServerStatus(data.status);
-            setTimeout(() => {
-                setServerStatus('Running');
-            }, 2000);
         } catch (error) {
             console.error('Error restarting server:', error);
         }
+        setLoading(false); // Сбрасываем состояние загрузки
     };
 
     return (
         <div>
             <h2>{game} Server Control</h2>
-            <p>Сейчас сервер: <b>{serverStatus}</b></p>
+            <p>Сейчас сервер: <b>{loading ? <Spin /> : serverStatus}</b></p>
             <Row gutter={16}>
                 <Col>
-                    <Button type="primary" onClick={handleStart} className="custom-button primary-button">Start</Button>
+                    <Button type="primary" onClick={handleStart} className="custom-button primary-button" disabled={loading}>Start</Button>
                 </Col>
                 <Col>
-                    <Button type="danger" onClick={handleStop} className="custom-button danger-button">Stop</Button>
+                    <Button type="danger" onClick={handleStop} className="custom-button danger-button" disabled={loading}>Stop</Button>
                 </Col>
                 <Col>
-                    <Button type="default" onClick={handleRestart} className="custom-button default-button">Restart</Button>
+                    <Button type="default" onClick={handleRestart} className="custom-button default-button" disabled={loading || serverStatus === 'Stopped'}>Restart</Button>
                 </Col>
             </Row>
             <Card title="Server Metrics" style={{ marginTop: 20 }}>

@@ -1,10 +1,11 @@
-import random
+import paramiko
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 import os
 from pydantic import BaseModel
 import psutil
+from config import host, user, secret, port
 
 app = FastAPI()
 
@@ -26,6 +27,10 @@ class Metrics(BaseModel):
     network_activity: float
 
 
+class GameRequest(BaseModel):
+    game: str
+
+
 @app.get("/metrics", response_model=Metrics)
 async def get_metrics():
     cpu_usage = psutil.cpu_percent(interval=1)  # Процент использования CPU
@@ -43,21 +48,63 @@ async def get_metrics():
 
 
 @app.post("/server/start")
-async def start_server(game: str = Query(...)):
-    print(f"Starting server for {game}")
-    return JSONResponse(content={"status": "Running"})
+async def start_server(request: GameRequest):
+    game = request.game
+    if game == 'Valheim':
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=host, username=user, password=secret, port=port)
+        stdin, stdout, stderr = client.exec_command('docker-compose -f projects/valheim/docker-compose.yml up -d')
+
+        stderr_output = stderr.read().decode('utf-8')
+        stdout_output = stdout.read().decode('utf-8')
+
+        client.close()
+
+        if "Container valheim_server  Started" in stderr_output or "Container valheim_server  Running" in stderr_output:
+            return JSONResponse(content={"status": "Started", "message": stderr_output + stdout_output})
+        else:
+            return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
 
 
 @app.post("/server/stop")
-async def stop_server():
-    print("Stopping server")
-    return JSONResponse(content={"status": "Stopped"})
+async def stop_server(request: GameRequest):
+    game = request.game
+    if game == 'Valheim':
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=host, username=user, password=secret, port=port)
+        stdin, stdout, stderr = client.exec_command('docker-compose -f projects/valheim/docker-compose.yml down')
+
+        stderr_output = stderr.read().decode('utf-8')
+        stdout_output = stdout.read().decode('utf-8')
+
+        if "Container valheim_server  Stopping" or "" in stderr_output:
+            client.close()
+            return JSONResponse(content={"status": "Stopped", "message": stderr_output + stdout_output})
+        else:
+            client.close()
+            return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
 
 
 @app.post("/server/restart")
-async def restart_server():
-    print("Restarting server")
-    return JSONResponse(content={"status": "Restarting"})
+async def stop_restart(request: GameRequest):
+    game = request.game
+    if game == 'Valheim':
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=host, username=user, password=secret, port=port)
+        stdin, stdout, stderr = client.exec_command('docker-compose -f projects/valheim/docker-compose.yml restart')
+
+        stderr_output = stderr.read().decode('utf-8')
+        stdout_output = stdout.read().decode('utf-8')
+
+        if "Container valheim_server  Restarting" in stderr_output:
+            client.close()
+            return JSONResponse(content={"status": "Started", "message": stderr_output + stdout_output})
+        else:
+            client.close()
+            return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
 
 
 if __name__ == "__main__":
