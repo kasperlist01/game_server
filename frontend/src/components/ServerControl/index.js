@@ -13,7 +13,7 @@ const ServerControl = ({ game }) => {
 
     const fetchMetrics = async () => {
         try {
-            const response = await fetch('http://localhost:5000/metrics');
+            const response = await fetch('http://localhost:8001/metrics');
             const data = await response.json();
             setMetrics({
                 cpuUsage: data.cpu_usage,
@@ -28,27 +28,42 @@ const ServerControl = ({ game }) => {
 
     useEffect(() => {
         fetchMetrics();
-        const interval = setInterval(fetchMetrics, 10000); // Обновляем метрики каждые 10 секунд
+        const interval = setInterval(fetchMetrics, 1000); // Обновляем метрики каждые 10 секунд
 
         return () => clearInterval(interval); // Очищаем интервал при размонтировании компонента
     }, []);
 
-    const handleStart = () => {
-        setServerStatus('Running');
-        // Здесь можно добавить логику для обновления метрик при запуске сервера
+    const handleStart = async () => {
+        try {
+            const response = await fetch('http://localhost:8001/server/start', { method: 'POST', body: JSON.stringify(game)});
+            const data = await response.json();
+            setServerStatus(data.status);
+        } catch (error) {
+            console.error('Error starting server:', error);
+        }
     };
 
-    const handleStop = () => {
-        setServerStatus('Stopped');
-        // Здесь можно добавить логику для обновления метрик при остановке сервера
+    const handleStop = async () => {
+        try {
+            const response = await fetch('http://localhost:8001/server/stop', { method: 'POST' });
+            const data = await response.json();
+            setServerStatus(data.status);
+        } catch (error) {
+            console.error('Error stopping server:', error);
+        }
     };
 
-    const handleRestart = () => {
-        setServerStatus('Restarting');
-        setTimeout(() => {
-            setServerStatus('Running');
-            // Здесь можно добавить логику для обновления метрик при перезапуске сервера
-        }, 2000);
+    const handleRestart = async () => {
+        try {
+            const response = await fetch('http://localhost:8001/server/restart', { method: 'POST' });
+            const data = await response.json();
+            setServerStatus(data.status);
+            setTimeout(() => {
+                setServerStatus('Running');
+            }, 2000);
+        } catch (error) {
+            console.error('Error restarting server:', error);
+        }
     };
 
     return (

@@ -13,5 +13,8 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 # Копируйте исходный код приложения в рабочую директорию
 COPY backend/ .
 
+VOLUME /host/proc
+VOLUME /host/sys
+
 # Сделайте порт доступным снаружи контейнера
 EXPOSE 8000
