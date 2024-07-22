@@ -12,6 +12,13 @@ app = FastAPI()
 # Путь к статическим файлам
 static_folder_path = '/app/frontend/build'
 app.mount("/static", StaticFiles(directory=os.path.join(static_folder_path, 'static')), name="static")
+app.mount("/icons", StaticFiles(directory=os.path.join(static_folder_path, 'icons')), name="icons")
+
+
+@app.get("/", include_in_schema=False)
+async def serve():
+    full_path = os.path.join(static_folder_path, 'index.html')
+    return FileResponse(full_path)
 
 
 @app.get("/manifest.json", include_in_schema=False)
@@ -20,12 +27,6 @@ async def manifest():
     if os.path.exists(full_path):
         return FileResponse(full_path)
     return JSONResponse(content={"error": "manifest.json not found"}, status_code=404)
-
-
-@app.get("/", include_in_schema=False)
-async def serve():
-    full_path = os.path.join(static_folder_path, 'index.html')
-    return FileResponse(full_path)
 
 
 class Metrics(BaseModel):
