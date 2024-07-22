@@ -1,7 +1,7 @@
 version: '3.8'
 
 volumes:
-  frontend_build: {}  # Определяем volume
+  frontend_build: {}
 
 services:
   frontend:
@@ -11,7 +11,7 @@ services:
     volumes:
       - ./frontend/src:/app/frontend/src
       - ./frontend/public:/app/frontend/public
-      - frontend_build:/app/frontend/build  # Монтируем volume
+      - frontend_build:/app/frontend/build
     ports:
       - "3000:3000"
     networks:
@@ -27,14 +27,16 @@ services:
       dockerfile: Dockerfile.backend
     volumes:
       - ./backend:/app
-      - frontend_build:/app/frontend/build  # Монтируем volume
-      - /var/run/docker.sock:/var/run/docker.sock  # Монтируем сокет Docker
+      - frontend_build:/app/frontend/build
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"
     environment:
       - FASTAPI_ENV=production
     networks:
-      - my_network
+      my_network:
+        aliases:
+          - fastapi-app
     container_name: game_server_backend
     profiles:
       - prod
@@ -45,14 +47,14 @@ services:
       dockerfile: Dockerfile.backend
     volumes:
       - ./backend:/app
-      - frontend_build:/app/frontend/build  # Монтируем volume
-      - /var/run/docker.sock:/var/run/docker.sock  # Монтируем сокет Docker
+      - frontend_build:/app/frontend/build
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8001:8000"
     environment:
       - FASTAPI_ENV=development
     networks:
-       - my_network
+      - my_network
     command: uvicorn app:app --host 0.0.0.0 --reload
     container_name: game_server_backend_dev
     profiles:
