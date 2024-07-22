@@ -36,7 +36,7 @@ services:
     networks:
       my_network:
         aliases:
-          - fastapi-app
+          - fastapi-app  # Добавляем алиас для nginx
     container_name: game_server_backend
     profiles:
       - prod
