@@ -6,14 +6,17 @@ import os
 from pydantic import BaseModel
 import psutil
 from starlette.websockets import WebSocketDisconnect
+import asyncio
+from collections import deque
 
 from config import host, user, secret, port
-import asyncio
 
 app = FastAPI()
 
 # Путь к статическим файлам
 static_folder_path = '/app/frontend/build'
+log_file_path = '/app/valheim/logs/valheim_server.log'
+
 app.mount("/static", StaticFiles(directory=os.path.join(static_folder_path, 'static')), name="static")
 app.mount("/icons", StaticFiles(directory=os.path.join(static_folder_path, 'icons')), name="icons")
 
@@ -175,6 +178,31 @@ async def stop_restart(request: GameRequest):
         else:
             client.close()
             return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
+
+
+@app.websocket("/ws/logs")
+async def websocket_logs(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        # Чтение последних 50 строк файла
+        with open(log_file_path, 'r') as file:
+            lines = deque(file, maxlen=50)
+            for line in lines:
+                await websocket.send_text(line)
+
+        with open(log_file_path, 'r') as file:
+            # Перейти в конец файла
+            file.seek(0, os.SEEK_END)
+            while True:
+                line = file.readline()
+                if line:
+                    print(f"Sending log line: {line.strip()}")  # Добавление логирования отправки строки
+                    await websocket.send_text(line)
+                else:
+                    print("No new lines. Sleeping...")
+                    await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        print("Client disconnected")
 
 
 if __name__ == "__main__":

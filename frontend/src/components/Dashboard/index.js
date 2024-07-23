@@ -22,7 +22,7 @@ function Dashboard({ current }) {
                     <h2>Player Management</h2>
                     <PlayerManagement />
                     <h2>Logs</h2>
-                    <Logs />
+                    <Logs game={game} />
                 </>
             ) : (
                 <p>Скоро будет...</p>

@@ -30,6 +30,7 @@ services:
       - ./frontend/src:/app/frontend/src
       - ./frontend/public:/app/frontend/public
       - frontend_build:/app/frontend/build
+      - /home/kasper/projects/valheim/logs:/app/valheim/logs
     ports:
       - "3000:3000"
     networks:
@@ -67,6 +68,7 @@ services:
     volumes:
       - ./backend:/app
       - frontend_build:/app/frontend/build
+      - ./valheim/logs:/app/valheim/logs
     ports:
       - "8001:8000"
     environment:

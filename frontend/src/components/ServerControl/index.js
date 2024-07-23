@@ -37,12 +37,9 @@ const ServerControl = ({ game }) => {
         // Затем подключение к WebSocket для обновлений
         const wsUrl = serverUrl.replace(/^http/, 'ws'); // Заменяем http на ws
         const ws = new WebSocket(`${wsUrl}/ws/metrics`); // Создаем WebSocket подключение
-        console.log(`WebSocket connection to: ${wsUrl}/ws/metrics`);
-
         // Обработчик сообщения от WebSocket
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log("Received data: ", data);
             setMetrics({
                 cpuUsage: data.cpu_usage,
                 memoryUsage: data.memory_usage,
