@@ -13,27 +13,50 @@ const ServerControl = ({ game }) => {
         networkActivity: 0
     });
 
-    const fetchMetrics = async () => {
-        try {
-            const response = await fetch(serverUrl + '/metrics');
-            const data = await response.json();
+    // Использование WebSocket для получения метрик в реальном времени
+    useEffect(() => {
+        // Сначала загрузка метрик через HTTP-запрос
+        const fetchInitialMetrics = async () => {
+            try {
+                const response = await fetch(`${serverUrl}/metrics`);
+                const data = await response.json();
+                setMetrics({
+                    cpuUsage: data.cpu_usage,
+                    memoryUsage: data.memory_usage,
+                    diskSpaceUsed: data.disk_space_used,
+                    networkActivity: data.network_activity
+                });
+                setServerStatus(data.server_status);
+            } catch (error) {
+                console.error('Error fetching initial metrics:', error);
+            }
+        };
+
+        fetchInitialMetrics();
+
+        // Затем подключение к WebSocket для обновлений
+        const wsUrl = serverUrl.replace(/^http/, 'ws'); // Заменяем http на ws
+        const ws = new WebSocket(`${wsUrl}/ws/metrics`); // Создаем WebSocket подключение
+        console.log(`WebSocket connection to: ${wsUrl}/ws/metrics`);
+
+        // Обработчик сообщения от WebSocket
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Received data: ", data);
             setMetrics({
                 cpuUsage: data.cpu_usage,
                 memoryUsage: data.memory_usage,
                 diskSpaceUsed: data.disk_space_used,
                 networkActivity: data.network_activity
             });
-        } catch (error) {
-            console.error('Error fetching metrics:', error);
-        }
-    };
+            setServerStatus(data.server_status);
+        };
 
-    useEffect(() => {
-        fetchMetrics();
-        const interval = setInterval(fetchMetrics, 10000); // Обновляем метрики каждые 10 секунд
-
-        return () => clearInterval(interval); // Очищаем интервал при размонтировании компонента
-    }, []);
+        // Закрываем WebSocket подключение при размонтировании компонента
+        return () => {
+            ws.close();
+        };
+    }, [serverUrl]);
 
     const handleStart = async () => {
         setLoading(true); // Устанавливаем состояние загрузки
@@ -93,7 +116,7 @@ const ServerControl = ({ game }) => {
     return (
         <div>
             <h2>{game} Server Control</h2>
-            <p>Сейчас сервер: <b>{loading ? <Spin /> : serverStatus}</b></p>
+            <p>Состояние сервера: <b>{loading ? <Spin /> : serverStatus}</b></p>
             <Row gutter={16}>
                 <Col>
                     <Button type="primary" onClick={handleStart} className="custom-button primary-button" disabled={loading}>Start</Button>

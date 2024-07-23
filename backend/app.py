@@ -1,11 +1,14 @@
 import paramiko
-from fastapi import FastAPI, Query
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 import os
 from pydantic import BaseModel
 import psutil
+from starlette.websockets import WebSocketDisconnect
+
 from config import host, user, secret, port
+import asyncio
 
 app = FastAPI()
 
@@ -36,11 +39,18 @@ class Metrics(BaseModel):
     network_activity: float
 
 
+class StatusMetrics(BaseModel):
+    cpu_usage: float
+    memory_usage: float
+    disk_space_used: float
+    network_activity: float
+    server_status: str
+
+
 class GameRequest(BaseModel):
     game: str
 
 
-@app.get("/metrics", response_model=Metrics)
 async def get_metrics():
     cpu_usage = psutil.cpu_percent(interval=1)  # Процент использования CPU
     memory_info = psutil.virtual_memory()  # Информация о памяти
@@ -53,7 +63,58 @@ async def get_metrics():
         disk_space_used=int(disk_info.used / (1024 * 1024 * 1024)),  # Преобразование в ГБ
         network_activity=round((net_info.bytes_sent + net_info.bytes_recv) / (1024 * 1024), 2)  # Преобразование в МБ
     )
-    return JSONResponse(content=metrics.dict())
+    return metrics
+
+
+async def get_status():
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(hostname=host, username=user, password=secret, port=port)
+    stdin, stdout, stderr = client.exec_command('docker ps')
+
+    stderr_output = stderr.read().decode('utf-8')
+    stdout_output = stdout.read().decode('utf-8')
+
+    client.close()
+
+    if "valheim_server" in stdout_output:
+        return "Running"
+    else:
+        return "Stopped"
+
+
+@app.websocket("/ws/metrics")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            metrics = await get_metrics()
+            server_status = await get_status()
+            status_metrics = StatusMetrics(
+                cpu_usage=metrics.cpu_usage,
+                memory_usage=metrics.memory_usage,
+                disk_space_used=metrics.disk_space_used,
+                network_activity=metrics.network_activity,
+                server_status=server_status
+            )
+            await websocket.send_json(status_metrics.dict())
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        print("Client disconnected")
+
+
+@app.get("/metrics", response_model=Metrics)
+async def get_metrics_http():
+    metrics = await get_metrics()
+    server_status = await get_status()
+    status_metrics = StatusMetrics(
+        cpu_usage=metrics.cpu_usage,
+        memory_usage=metrics.memory_usage,
+        disk_space_used=metrics.disk_space_used,
+        network_activity=metrics.network_activity,
+        server_status=server_status
+    )
+    return JSONResponse(content=status_metrics.dict())
 
 
 @app.post("/server/start")
