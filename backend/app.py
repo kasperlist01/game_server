@@ -1,10 +1,11 @@
-import paramiko
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from pydantic import BaseModel
 import psutil
+import paramiko
 from starlette.websockets import WebSocketDisconnect
 import asyncio
 from collections import deque
@@ -13,6 +14,15 @@ from config import host, user, secret, port
 
 app = FastAPI()
 
+# Добавление CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Разрешить запросы с любых источников, можно указать конкретные домены
+    allow_credentials=True,
+    allow_methods=["*"],  # Разрешить все методы (GET, POST, PUT и т.д.)
+    allow_headers=["*"],  # Разрешить все заголовки
+)
+
 # Путь к статическим файлам
 static_folder_path = '/app/frontend/build'
 log_file_path = '/app/valheim/logs/valheim_server.log'
@@ -20,12 +30,10 @@ log_file_path = '/app/valheim/logs/valheim_server.log'
 app.mount("/static", StaticFiles(directory=os.path.join(static_folder_path, 'static')), name="static")
 app.mount("/icons", StaticFiles(directory=os.path.join(static_folder_path, 'icons')), name="icons")
 
-
 @app.get("/", include_in_schema=False)
 async def serve():
     full_path = os.path.join(static_folder_path, 'index.html')
     return FileResponse(full_path)
-
 
 @app.get("/manifest.json", include_in_schema=False)
 async def manifest():
@@ -34,13 +42,11 @@ async def manifest():
         return FileResponse(full_path)
     return JSONResponse(content={"error": "manifest.json not found"}, status_code=404)
 
-
 class Metrics(BaseModel):
     cpu_usage: float
     memory_usage: float
     disk_space_used: float
     network_activity: float
-
 
 class StatusMetrics(BaseModel):
     cpu_usage: float
@@ -49,10 +55,8 @@ class StatusMetrics(BaseModel):
     network_activity: float
     server_status: str
 
-
 class GameRequest(BaseModel):
     game: str
-
 
 async def get_metrics():
     cpu_usage = psutil.cpu_percent(interval=1)  # Процент использования CPU
@@ -67,7 +71,6 @@ async def get_metrics():
         network_activity=round((net_info.bytes_sent + net_info.bytes_recv) / (1024 * 1024), 2)  # Преобразование в МБ
     )
     return metrics
-
 
 async def get_status():
     client = paramiko.SSHClient()
@@ -84,7 +87,6 @@ async def get_status():
         return "Running"
     else:
         return "Stopped"
-
 
 @app.websocket("/ws/metrics")
 async def websocket_endpoint(websocket: WebSocket):
@@ -105,7 +107,6 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("Client disconnected")
 
-
 @app.get("/metrics", response_model=Metrics)
 async def get_metrics_http():
     metrics = await get_metrics()
@@ -118,7 +119,6 @@ async def get_metrics_http():
         server_status=server_status
     )
     return JSONResponse(content=status_metrics.dict())
-
 
 @app.post("/server/start")
 async def start_server(request: GameRequest):
@@ -139,7 +139,6 @@ async def start_server(request: GameRequest):
         else:
             return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
 
-
 @app.post("/server/stop")
 async def stop_server(request: GameRequest):
     game = request.game
@@ -159,7 +158,6 @@ async def stop_server(request: GameRequest):
             client.close()
             return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
 
-
 @app.post("/server/restart")
 async def stop_restart(request: GameRequest):
     game = request.game
@@ -178,7 +176,6 @@ async def stop_restart(request: GameRequest):
         else:
             client.close()
             return JSONResponse(content={"status": "Error", "message": stderr_output + stdout_output})
-
 
 @app.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
@@ -203,7 +200,6 @@ async def websocket_logs(websocket: WebSocket):
                     await asyncio.sleep(1)
     except WebSocketDisconnect:
         print("Client disconnected")
-
 
 if __name__ == "__main__":
     import uvicorn
