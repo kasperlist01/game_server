@@ -185,7 +185,8 @@ async def websocket_logs(websocket: WebSocket):
         with open(log_file_path, 'r') as file:
             lines = deque(file, maxlen=50)
             for line in lines:
-                await websocket.send_text(line)
+                if 'playfab' not in line.lower():
+                    await websocket.send_text(line)
 
         with open(log_file_path, 'r') as file:
             # Перейти в конец файла
